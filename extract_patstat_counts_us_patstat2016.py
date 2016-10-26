@@ -1,4 +1,6 @@
 #!/usr/bin/python
+from client_info import mysql_credentials
+import MySQLdb
 
 """
 .. module:: find_patstat_applications_mysql
@@ -13,15 +15,18 @@ Swinburne University of Technology, 2015
 
 def main():
 
-    db = mt.get_db1()
+    #db = mt.get_db1()
+    db = MySQLdb.connect(host='ctinnovation-db.cc.swin.edu.au', db='patstat_2016', charset='utf8', **mysql_credentials)
     cur = db.cursor()
 
     # patstat_appln_id -> appln_id
     # year(appln_filing_date) -> appln_filing_year
     #print cur.execute("""SELECT patstat_appln_id, year(appln_filing_date), year(publn_first_grant_date) FROM  """
     #                 """mondelez_2014_patstat_appln WHERE appln_auth = 'US' """)
+    #print cur.execute("""SELECT appln_id, appln_filing_year, granted FROM  """
+    #                  """tls201_appln WHERE appln_auth = 'US' """)
     print cur.execute("""SELECT appln_id, appln_filing_year, granted FROM  """
-                      """tls201_appln WHERE appln_auth = 'US' """)
+                      """tls201_appln WHERE appln_auth = 'US' AND granted=1 LIMIT 10""")
     results = cur.fetchall()
 
     year_dict_reg = dict()
@@ -46,19 +51,19 @@ def main():
             print i
 
         if granted:
-        	cur.execute("""SELECT year(publn_date) FROM tls221_pat_publn WHERE appln_id=%s AND publn_first_grant=1 """, [nr])
-        	reg = cur.fetch()
+        	cur.execute("""SELECT year(publn_date) FROM tls211_pat_publn WHERE appln_id=%s AND publn_first_grant=1 """, [nr])
+        	reg = cur.fetchone()[0]
         else:
         	reg = None
 
 
         #cur.execute("""SELECT applt_ctry_code FROM mondelez_2014_patstat_applt where patstat_appln_id = %s """, [nr])
-        cur.execute("""SELECT p.person_ctry_code FROM tls2016_person as p, tls207_pers_appln as pa WHERE p.person_id = pa.person_id AND pa.appln_id = %s """, [nr])
+        cur.execute("""SELECT p.person_ctry_code FROM tls206_person as p, tls207_pers_appln as pa WHERE p.person_id = pa.person_id AND pa.appln_id = %s """, [nr])
 
         applt_ctrys = [x[0] for x in cur.fetchall()]
 
         #cur.execute("""SELECT left(ipc_class_symbol, 4) FROM mondelez_2014_patstat_ipc where patstat_appln_id = %s """, [nr])
-        cur.execute(""""SELECT left(ipc_class_symbol, 4) FROM tls209_appln_ipc where appln_id = %s """, [nr])
+        cur.execute("""SELECT left(ipc_class_symbol, 4) FROM tls209_appln_ipc where appln_id = %s """, [nr])
 
         ipcs = [x[0] for x in cur.fetchall()]
 
@@ -102,10 +107,10 @@ def main():
 
 if __name__ == '__main__':
     import sys
-    import mysql_common.mysql_tools as mt
+    #import mysql_common.mysql_tools as mt
 
     reload(sys)
     sys.setdefaultencoding("utf-8")
-    sys.path.append("/home/tjulius/pythonstuff/modules")
+    #sys.path.append("/home/tjulius/pythonstuff/modules")
     main()
 
